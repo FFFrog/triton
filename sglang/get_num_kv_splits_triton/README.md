@@ -1,3 +1,4 @@
+```Python
 Traceback (most recent call last):
   File "/home/y30064824/triton/SGL/sglang/python/sglang/srt/layers/attention/test_triton_backend.py", line 5, in <module>
     device = torch.device("npu:0")
@@ -217,6 +218,7 @@ huawei.HuaweiCompilationError:
   }) {global_kernel = "local", noinline = false} : () -> ()
 }) : () -> ()
 ///------------------[ERROR][TritonAscend][END]------------------
+```
 
 [ERROR] 2025-04-24-11:48:38 (PID:117301, Device:0, RankID:-1) ERR99999 UNKNOWN application exception
 
