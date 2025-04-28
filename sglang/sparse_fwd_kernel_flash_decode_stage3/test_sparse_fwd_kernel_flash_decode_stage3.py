@@ -1,0 +1,100 @@
+import torch
+import torch_npu
+import triton
+import triton.language as tl
+
+@triton.jit
+def _sparse_fwd_kernel_flash_decode_stage3(
+    Mid_O,  # [batch, head, seq_block_num, head_dim]
+    Mid_O_LogExpSum,  # [batch, head, seq_block_num]
+    O,  # [batch, head, head_dim]
+    seq_len,  # NOTE: This can be used as constexpr but we may support dynamic heavy token number in the future
+    stride_mid_ob,
+    stride_mid_oh,
+    stride_mid_os,
+    stride_mid_o_eb,
+    stride_mid_o_eh,
+    stride_obs,
+    stride_oh,
+    BLOCK_SEQ: tl.constexpr,
+    BLOCK_DMODEL: tl.constexpr,
+):
+    cur_batch = tl.program_id(0)
+    cur_head = tl.program_id(1)
+
+    offs_d = tl.arange(0, BLOCK_DMODEL)
+
+    block_n_size = tl.where(seq_len <= 0, 0, seq_len + BLOCK_SEQ - 1) // BLOCK_SEQ
+
+    sum_exp = 0.0
+    max_logic = -float("inf")
+    acc = tl.zeros([BLOCK_DMODEL], dtype=tl.float32)
+
+    offs_v = cur_batch * stride_mid_ob + cur_head * stride_mid_oh + offs_d
+    offs_logic = cur_batch * stride_mid_o_eb + cur_head * stride_mid_o_eh
+
+    for block_seq_n in range(0, block_n_size, 1):
+        tv = tl.load(Mid_O + offs_v + block_seq_n * stride_mid_os)
+        tlogic = tl.load(Mid_O_LogExpSum + offs_logic + block_seq_n)
+        new_max_logic = tl.maximum(tlogic, max_logic)
+
+        old_scale = tl.exp(max_logic - new_max_logic)
+        acc *= old_scale
+        exp_logic = tl.exp(tlogic - new_max_logic)
+        acc += exp_logic * tv
+        sum_exp = sum_exp * old_scale + exp_logic
+        max_logic = new_max_logic
+
+    tl.store(O + cur_batch * stride_obs + cur_head * stride_oh + offs_d, acc / sum_exp)
+
+
+@torch.no_grad()
+def sparse_flash_decode_stage3(Seqlen, mid_out, mid_out_logexpsum, O, block_seq):
+    Lk = mid_out.shape[-1]
+    assert Lk in {16, 32, 64, 128}
+    batch, head_num = mid_out.shape[0], mid_out.shape[1]
+    grid = (batch, head_num)
+
+    _sparse_fwd_kernel_flash_decode_stage3[grid](
+        mid_out,
+        mid_out_logexpsum,
+        O,
+        Seqlen,
+        mid_out.stride(0),
+        mid_out.stride(1),
+        mid_out.stride(2),
+        mid_out_logexpsum.stride(0),
+        mid_out_logexpsum.stride(1),
+        O.stride(0),
+        O.stride(1),
+        BLOCK_SEQ=block_seq,
+        BLOCK_DMODEL=Lk,
+        num_warps=4,
+        num_stages=2,
+    )
+
+# 初始化输入张量
+batch_size = 4
+head_num = 8
+seq_len = 128
+d_model = 64
+block_seq = 16
+
+# 中间输出张量
+mid_out = torch.randn(batch_size, head_num, seq_len // block_seq, d_model, device="npu", dtype=torch.float16)
+mid_out_logexpsum = torch.randn(batch_size, head_num, seq_len // block_seq, device="npu", dtype=torch.float16)
+
+# 最终输出张量
+O = torch.zeros(batch_size, head_num, d_model, device="npu", dtype=torch.float16)
+
+# 序列长度
+Seqlen = seq_len
+
+# 调用函数
+sparse_flash_decode_stage3(
+    Seqlen,
+    mid_out,
+    mid_out_logexpsum,
+    O,
+    block_seq,
+)
