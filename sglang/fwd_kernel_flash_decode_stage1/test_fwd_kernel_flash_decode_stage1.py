@@ -198,9 +198,3 @@ mid_out_logsumexp = torch.zeros(batch_size, head_num, seq_len // block_seq, devi
 flash_decode_stage1(
     q, k, v, Req_to_tokens, B_req_idx, B_Seqlen, seq_len, mid_out, mid_out_logsumexp, block_seq
 )
-
-# 打印结果
-print("Mid Output:")
-print(mid_out)
-print("\nMid Output LogExpSum:")
-print(mid_out_logsumexp)
