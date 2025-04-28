@@ -140,13 +140,13 @@ block_size = 32
 logit_cap = 50.0
 
 # 查询、键和注意力输出张量
-q_label = torch.randn(batch_size, head_num, seq_len, d_model, device="cuda", dtype=torch.float16)
-k_label_buffer = torch.randn(batch_size, head_num, seq_len, d_model, device="cuda", dtype=torch.float16)
-att_out = torch.zeros(head_num, batch_size, seq_len, device="cuda", dtype=torch.float16)
+q_label = torch.randn(batch_size, head_num, seq_len, d_model, device="npu", dtype=torch.float16)
+k_label_buffer = torch.randn(batch_size, head_num, seq_len, d_model, device="npu", dtype=torch.float16)
+att_out = torch.zeros(head_num, batch_size, seq_len, device="npu", dtype=torch.float16)
 
 # 请求到标记的映射和序列长度
-Req_to_tokens = torch.randint(0, seq_len, (batch_size, seq_len), device="cuda", dtype=torch.int32)
-B_Seqlen = torch.full((batch_size,), seq_len, device="cuda", dtype=torch.int32)
+Req_to_tokens = torch.randint(0, seq_len, (batch_size, seq_len), device="npu", dtype=torch.int32)
+B_Seqlen = torch.full((batch_size,), seq_len, device="npu", dtype=torch.int32)
 
 # 缩放因子
 sm_scale = 1.0 / (d_model**0.5)
