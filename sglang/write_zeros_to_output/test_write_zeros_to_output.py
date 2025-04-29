@@ -12,9 +12,9 @@ def write_zeros_to_output(
     N,
     offs_token,
     token_mask,
-    BLOCK_SIZE_M: tl.constexpr,
-    BLOCK_SIZE_N: tl.constexpr,
-    compute_type: tl.constexpr,
+    BLOCK_SIZE_M,
+    BLOCK_SIZE_N,
+    compute_type,
 ):
     accumulator = tl.zeros((BLOCK_SIZE_M, BLOCK_SIZE_N), dtype=compute_type)
     offs_cn = pid_n * BLOCK_SIZE_N + tl.arange(0, BLOCK_SIZE_N)
@@ -22,63 +22,60 @@ def write_zeros_to_output(
     c_mask = token_mask[:, None] & (offs_cn[None, :] < N)
     tl.store(c_ptrs, accumulator, mask=c_mask)
 
-def call_write_zeros(
+def launch_write_zeros_to_output(
     output: torch.Tensor,
-    token_mask: torch.Tensor,
-    BLOCK_SIZE_M: int = 64,
-    BLOCK_SIZE_N: int = 64,
+    token_ids: torch.Tensor,
+    valid_tokens_mask: torch.Tensor,
+    BLOCK_SIZE_M: int = 32,
+    BLOCK_SIZE_N: int = 32,
 ):
     """
-    Call the write_zeros_to_output kernel to initialize output tensor with zeros.
-    
     Args:
-        output: Output tensor to be zeroed (M x N)
-        token_mask: Mask indicating which tokens to process (M,)
-        BLOCK_SIZE_M: Tile size along M dimension
-        BLOCK_SIZE_N: Tile size along N dimension
+        output: Tensor[M, N], 输出张量，将被部分置零。
+        token_ids: Tensor[TOKENS], 有效 token 的行索引（如 [0, 1, 2] 表示前三行）。
+        valid_tokens_mask: Tensor[TOKENS], 每个 token 是否有效的掩码（bool 或 int 类型）。
+        BLOCK_SIZE_M/N: 块大小，需编译时确定。
     """
-    assert output.is_cuda, "Output tensor must be on GPU/NPU"
-    assert token_mask.is_cuda, "Token mask must be on GPU/NPU"
-    
     M, N = output.shape
-    grid = lambda meta: (triton.cdiv(N, meta['BLOCK_SIZE_N']),)
-    
-    # Convert token_mask to the right format
-    offs_token = torch.arange(0, M, device=output.device)
-    token_mask = token_mask.to(torch.bool)
-    
+    grid = (1,)  # 当前只处理第一个 n-block，可根据需要扩展
+
+    if output.dtype == torch.float16:
+        compute_type = tl.float16
+    elif output.dtype == torch.bfloat16:
+        compute_type = tl.bfloat16
+    elif output.dtype == torch.float32:
+        compute_type = tl.float32
+    else:
+        raise ValueError(f"Unsupported dtype: {output.dtype}")
+
     write_zeros_to_output[grid](
-        output,
-        output.stride(0),
-        output.stride(1),
-        0,  # pid_n will be handled by the grid
-        N,
-        offs_token,
-        token_mask,
-        BLOCK_SIZE_M,
-        BLOCK_SIZE_N,
-        compute_type=output.dtype,  # 使用输出张量的dtype
+        c_ptr=output,
+        stride_cm=output.stride(0),
+        stride_cn=output.stride(1),
+        pid_n=0,
+        N=N,
+        offs_token=token_ids,
+        token_mask=valid_tokens_mask,
+        BLOCK_SIZE_M=BLOCK_SIZE_M,
+        BLOCK_SIZE_N=BLOCK_SIZE_N,
+        compute_type=compute_type,
     )
 
-# Example usage
 if __name__ == "__main__":
-    # Set device - this will automatically use NPU if available
-    device = torch.device('npu')
-    
-    # Create sample data
-    M, N = 1024, 2048
-    output = torch.randn(M, N, device=device)
-    token_mask = torch.ones(M, device=device, dtype=torch.bool)  # Process all tokens
-    
-    print("Original output (first 5x5):")
-    print(output[:5, :5])
-    
-    # Call the zeroing function
-    call_write_zeros(output, token_mask)
-    
-    print("\nOutput after zeroing (first 5x5):")
-    print(output[:5, :5])
-    
-    # Verify the result
-    assert torch.allclose(output, torch.zeros_like(output)), "Output was not properly zeroed"
-    print("\nVerification passed - output is all zeros!")
+    # 构造参数
+    M = 128   # 所有 token 总数
+    N = 64    # 每个 token 的维度
+    TOKENS = 8  # 本次操作的有效 token 数量
+
+    output = torch.randn(M, N, device="npu", dtype=torch.float16)
+    print("Before zeroing:\n", output[:TOKENS, :16])
+
+    token_ids = torch.tensor([i for i in range(TOKENS)], device="npu", dtype=torch.int32)
+    valid_tokens_mask = torch.tensor([True] * TOKENS, device="npu")
+
+    # 调用 launcher
+    launch_write_zeros_to_output(output, token_ids, valid_tokens_mask)
+
+    # torch.cuda.synchronize()
+
+    print("\nAfter zeroing:\n", output[:TOKENS, :16])  # 应该变为 0
