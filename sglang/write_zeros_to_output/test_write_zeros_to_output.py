@@ -1,8 +1,9 @@
 import torch
+import torch_npu
 import triton
 import triton.language as tl
 
-# 你提供的 write_zeros_to_output kernel
+# 假设 write_zeros_to_output 已定义好
 @triton.jit
 def write_zeros_to_output(
     c_ptr,
@@ -23,46 +24,44 @@ def write_zeros_to_output(
     tl.store(c_ptrs, accumulator, mask=c_mask)
 
 def test_write_zeros_to_output():
-    # 设置参数
-    device = "cuda"
-    BLOCK_SIZE_M = 32
-    BLOCK_SIZE_N = 64
-    M = 64  # 总共的 token 数量
-    N = 128  # 输出维度
-    num_valid_tokens = 48  # 前面的有效 token 数量
+    device = 'cuda'
+    dtype = torch.bfloat16
+    M, N = 64, 128
+    BLOCK_SIZE_M, BLOCK_SIZE_N = 32, 64
+    pid_n = 0
 
-    # 创建输出张量（初始化为随机值，我们之后会写零进去）
-    C = torch.randn((M, N), device=device, dtype=torch.bfloat16)
+    # 创建输出张量
+    C = torch.randn(M, N, device=device, dtype=dtype)
 
-    # 构造输入参数
+    # 构造参数
+    c_ptr = C.data_ptr()
     stride_cm = C.stride(0)
     stride_cn = C.stride(1)
 
-    # 假设当前处理第 pid_n = 0 个 block column
-    pid_n = 0
-
-    # token id：假设前 num_valid_tokens 是有效的
+    # 构造 token id 和 mask
     offs_token = torch.arange(M, device=device)
-    token_mask = (offs_token < num_valid_tokens)
+    token_mask = (offs_token < 32)  # 前32个是有效的token
 
-    # 启动 kernel
-    grid = lambda META: (1,)  # 只需要一个 block 来做测试
-    write_zeros_to_output[grid](
-        c_ptr=C.data_ptr(),
-        stride_cm=stride_cm,
-        stride_cn=stride_cn,
-        pid_n=pid_n,
-        N=N,
-        offs_token=offs_token,
-        token_mask=token_mask,
-        BLOCK_SIZE_M=BLOCK_SIZE_M,
-        BLOCK_SIZE_N=BLOCK_SIZE_N,
+    # 编译 kernel（显式）
+    kernel = write_zeros_to_output.compile()
+
+    # 调用 run 方法，而不是 kernel[grid]()
+    kernel.run(
+        c_ptr,
+        stride_cm,
+        stride_cn,
+        pid_n,
+        N,
+        offs_token,
+        token_mask,
+        BLOCK_SIZE_M,
+        BLOCK_SIZE_N,
         compute_type=tl.bfloat16,
     )
 
-    # 打印部分结果确认是否成功写入 0
-    print("First few rows of output matrix C:")
-    print(C[:8, :8].cpu().to(torch.float32))  # 转成 float 显示更清晰
+    # 检查结果
+    print("Output tensor after zero writing:")
+    print(C[:8, :8].cpu().to(torch.float32))
 
 if __name__ == "__main__":
     test_write_zeros_to_output()
