@@ -1,5 +1,5 @@
 import itertools
-
+import triton.testing as tt4n
 import pytest
 import torch
 # import torch_npu
@@ -221,6 +221,70 @@ def test_moe_align_block_size_compare_implementations(
     #     f"Triton num_tokens_post_pad: {num_tokens_post_pad_triton}"
     # )
 
+# 性能测试配置部分
+configs = [
+    tt4n.Benchmark(
+        x_names=['block_size'],  # 横轴变量
+        x_vals=[32, 64, 128, 256],  # block_size 值
+        line_arg='num_experts',  # 不同线代表不同的 num_experts
+        line_vals=[64, 160, 256, 257],
+        line_names=[f"experts={x}" for x in [64, 160, 256, 257]],
+        ylabel='Time (ms)',
+        plot_name=f"moe-align-block-size-bench-num_tokens-{nt}-topk-{tk}",
+        args={'num_tokens': nt, 'topk': tk}
+    )
+    for nt in [64, 128, 256, 512, 1024]  # 测试多个 token 数量
+    for tk in [1, 2, 4, 8]
+]
+
+@tt4n.perf_report(configs)
+def bench_moe_align_block_size(block_size, num_tokens, topk, num_experts):
+    topk_ids = torch.stack(
+        [
+            torch.randperm(num_experts, dtype=torch.int32, device="cuda")[:topk]
+            for _ in range(num_tokens)
+        ]
+    )
+
+    max_num_tokens_padded = topk_ids.numel() + num_experts * (block_size - 1)
+
+    sorted_ids_triton = torch.empty(
+        (max_num_tokens_padded,), dtype=torch.int32, device=topk_ids.device
+    )
+    expert_ids_triton = torch.zeros(
+        (max_num_tokens_padded // block_size,),
+        dtype=torch.int32,
+        device=topk_ids.device,
+    )
+    num_tokens_post_pad_triton = torch.empty(
+        (1), dtype=torch.int32, device=topk_ids.device
+    )
+
+    def kernel_call():
+        moe_align_block_size_triton(
+            topk_ids,
+            num_experts,
+            block_size,
+            sorted_ids_triton,
+            expert_ids_triton,
+            num_tokens_post_pad_triton,
+        )
+
+    return tt4n.do_bench(kernel_call)
+
 if __name__ == "__main__":
-    pytest.main([__file__])
+    # pytest.main([__file__])
+    import sys
+    import os
+
+    # 选择保存图像目录（可选）
+    output_dir = "./perf_results"
+    os.makedirs(output_dir, exist_ok=True)
+
+    # 设置图像保存路径
+    for config in configs:
+        config.save_path = output_dir
+
+    # 运行所有性能测试
+    tt4n.main.bench([bench_moe_align_block_size])
 
