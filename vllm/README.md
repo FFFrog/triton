@@ -210,3 +210,31 @@ E               ///------------------[ERROR][Triton][END]------------------
 ```
 
 </details>
+
+### vllm/model_executor/layers/lightning_attn.py
+
+- [x] `_fwd_diag_kernel`
+- [x] `_fwd_kv_parallel`
+- [x] `_fwd_kv_reduce`
+- [x] `_fwd_none_diag_kernel`
+- [x] `_linear_attn_decode_kernel`
+
+```python
+pytest -svx tests/kernels/attention/test_lightning_attn.py
+```
+
+<details>
+<summary>MLIRCompilationError</summary>
+
+```
+E               triton.compiler.errors.MLIRCompilationError:
+E               ///------------------[ERROR][Triton][BEG]------------------
+E               [ConvertTritonIRToLinalgIR] encounters error:
+E               /home/devuser/workspace/vllm-project/vllm/vllm/model_executor/layers/lightning_attn.py:507:0: error: 'func.return' op has 1 operands, but enclosing function (@_linear_attn_decode_kernel) returns 0
+E               /home/devuser/workspace/vllm-project/vllm/vllm/model_executor/layers/lightning_attn.py:507:0: note: see current operation: "func.return"(%9) : (i1) -> ()
+E               ///------------------[ERROR][Triton][END]------------------
+
+../../ascend/triton-ascend/triton/python/triton/compiler/compiler.py:297: MLIRCompilationError
+```
+
+</details>
