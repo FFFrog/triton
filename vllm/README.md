@@ -322,3 +322,98 @@ Stack dump:
 ```
 
 </details>
+
+### vllm/model_executor/layers/quantization/awq_triton.py
+
+- [x] `awq_dequantize_kernel`
+- [x] `awq_gemm_kernel`
+
+```python
+pytest -svx tests/kernels/quantization/test_awq_triton.py
+```
+
+<details>
+<summary>MLIRCompilationError</summary>
+
+```
+E               triton.compiler.errors.MLIRCompilationError:
+E               ///------------------[ERROR][Triton][BEG]------------------
+E               [ConvertLinalgRToBinary] encounters error:
+E               loc("/tmp/tmptwao82mw/kernel.ttadapter.mlir":94:11): error: 'hivm.hir.vshr' op failed to verify that operand at index 1 is scalar-only
+E               loc("/tmp/tmptwao82mw/kernel.ttadapter.mlir":2:1): error: run BiShengHIR pipeline failed
+E
+E               loc("/tmp/tmptwao82mw/kernel.ttadapter.mlir":94:11): error: 'hivm.hir.vshr' op failed to verify that operand at index 1 is scalar-only
+E               loc("/tmp/tmptwao82mw/kernel.ttadapter.mlir":2:1): error: run BiShengHIR pipeline failed
+E
+E               loc("/tmp/tmptwao82mw/kernel.ttadapter.mlir":94:11): error: 'hivm.hir.vshr' op failed to verify that operand at index 1 is scalar-only
+E               loc("/tmp/tmptwao82mw/kernel.ttadapter.mlir":2:1): error: run BiShengHIR pipeline failed
+E
+E               loc("/tmp/tmptwao82mw/kernel.ttadapter.mlir":94:11): error: 'hivm.hir.vshr' op failed to verify that operand at index 1 is scalar-only
+E               loc("/tmp/tmptwao82mw/kernel.ttadapter.mlir":2:1): error: run BiShengHIR pipeline failed
+E
+E               loc("/tmp/tmptwao82mw/kernel.ttadapter.mlir":94:11): error: 'hivm.hir.vshr' op failed to verify that operand at index 1 is scalar-only
+E               loc("/tmp/tmptwao82mw/kernel.ttadapter.mlir":2:1): error: run BiShengHIR pipeline failed
+E
+E               Error run BiShengIR pipeline pipeline
+E               ///------------------[ERROR][Triton][END]------------------
+
+../../ascend/triton-ascend/triton/python/triton/compiler/compiler.py:297: MLIRCompilationError
+```
+
+</details>
+
+### vllm/model_executor/layers/quantization/compressed_tensors/triton_scaled_mm.py
+
+- [x] `scaled_mm_kernel`
+
+```python
+pytest -svx tests/kernels/quantization/test_triton_scaled_mm.py
+```
+
+<details>
+<summary>MLIRCompilationError</summary>
+
+```
+E               triton.compiler.errors.MLIRCompilationError:
+E               ///------------------[ERROR][Triton][BEG]------------------
+E               [ConvertTritonIRToLinalgIR] encounters error:
+E               PLEASE submit a bug report to https://github.com/llvm/llvm-project/issues/ and include the crash backtrace.
+E               Stack dump:
+E               0.      Program arguments: /home/devuser/workspace/ascend/triton-ascend/triton/python/triton/backends/huawei/triton-adapter-opt /tmp/tmpp5k26p28/kernel.ttir.mlir "--triton-to-linalg=global-kernel=false named-ops=True" -o /tmp/tmpp5k26p28/kernel.ttadapter.mlir
+E                #0 0x0000aaaab457ef80 llvm::sys::PrintStackTrace(llvm::raw_ostream&, int) (/home/devuser/workspace/ascend/triton-ascend/triton/python/triton/backends/huawei/triton-adapter-opt+0xfaef80)
+E                #1 0x0000aaaab457ca30 llvm::sys::RunSignalHandlers() (/home/devuser/workspace/ascend/triton-ascend/triton/python/triton/backends/huawei/triton-adapter-opt+0xfaca30)
+E                #2 0x0000aaaab457cb78 SignalHandler(int) Signals.cpp:0:0
+E                #3 0x0000ffffbebe57c0 (linux-vdso.so.1+0x7c0)
+E                #4 0x0000aaaab44f8558 mlir::Value::getDefiningOp() const (/home/devuser/workspace/ascend/triton-ascend/triton/python/triton/backends/huawei/triton-adapter-opt+0xf28558)
+E                #5 0x0000aaaab3740d68 mlir::triton::BlockDataParser::parseUnrealizedCast(mlir::UnrealizedConversionCastOp, mlir::triton::BlockData&, mlir::Location const&, mlir::ConversionPatternRewriter&, llvm::SmallDenseMap<mlir::Value, mlir::triton::BlockData, 4u, llvm::DenseMapInfo<mlir::Value, void>, llvm::detail::DenseMapPair<mlir::Value, mlir::triton::BlockData> > const&) (/home/devuser/workspace/ascend/triton-ascend/triton/python/triton/backends/huawei/triton-adapter-opt+0x170d68)
+E                #6 0x0000aaaab37462f4 mlir::triton::BlockDataParser::rewriteForOp(mlir::scf::ForOp, mlir::ConversionPatternRewriter&, std::map<int, std::set<int, std::less<int>, std::allocator<int> >, std::less<int>, std::allocator<std::pair<int const, std::set<int, std::less<int>, std::allocator<int> > > > >&, int, llvm::SmallDenseMap<mlir::Value, mlir::triton::BlockData, 4u, llvm::DenseMapInfo<mlir::Value, void>, llvm::detail::DenseMapPair<mlir::Value, mlir::triton::BlockData> >&) (/home/devuser/workspace/ascend/triton-ascend/triton/python/triton/backends/huawei/triton-adapter-opt+0x1762f4)
+E                #7 0x0000aaaab37307cc TTOpConverters::LoopConverter::matchAndRewrite(mlir::scf::ForOp, mlir::scf::ForOpAdaptor, mlir::ConversionPatternRewriter&) const (/home/devuser/workspace/ascend/triton-ascend/triton/python/triton/backends/huawei/triton-adapter-opt+0x1607cc)
+E                #8 0x0000aaaab3711040 mlir::OpConversionPattern<mlir::scf::ForOp>::matchAndRewrite(mlir::Operation*, llvm::ArrayRef<mlir::Value>, mlir::ConversionPatternRewriter&) const (/home/devuser/workspace/ascend/triton-ascend/triton/python/triton/backends/huawei/triton-adapter-opt+0x141040)
+E                #9 0x0000aaaab41deeec mlir::ConversionPattern::matchAndRewrite(mlir::Operation*, mlir::PatternRewriter&) const (/home/devuser/workspace/ascend/triton-ascend/triton/python/triton/backends/huawei/triton-adapter-opt+0xc0eeec)
+E               #10 0x0000aaaab4205ab0 mlir::PatternApplicator::matchAndRewrite(mlir::Operation*, mlir::PatternRewriter&, llvm::function_ref<bool (mlir::Pattern const&)>, llvm::function_ref<void (mlir::Pattern const&)>, llvm::function_ref<llvm::LogicalResult (mlir::Pattern const&)>) (/home/devuser/workspace/ascend/triton-ascend/triton/python/triton/backends/huawei/triton-adapter-opt+0xc35ab0)
+E               #11 0x0000aaaab41e2d24 (anonymous namespace)::OperationLegalizer::legalize(mlir::Operation*, mlir::ConversionPatternRewriter&) DialectConversion.cpp:0:0
+E               #12 0x0000aaaab41e31a8 mlir::OperationConverter::convert(mlir::ConversionPatternRewriter&, mlir::Operation*) (/home/devuser/workspace/ascend/triton-ascend/triton/python/triton/backends/huawei/triton-adapter-opt+0xc131a8)
+E               #13 0x0000aaaab41e8788 mlir::OperationConverter::convertOperations(llvm::ArrayRef<mlir::Operation*>) (/home/devuser/workspace/ascend/triton-ascend/triton/python/triton/backends/huawei/triton-adapter-opt+0xc18788)
+E               #14 0x0000aaaab41e94f4 mlir::applyPartialConversion(mlir::Operation*, mlir::ConversionTarget const&, mlir::FrozenRewritePatternSet const&, mlir::ConversionConfig) (/home/devuser/workspace/ascend/triton-ascend/triton/python/triton/backends/huawei/triton-adapter-opt+0xc194f4)
+E               #15 0x0000aaaab3707848 (anonymous namespace)::TritonToLinalgPass::runOnOperation() TritonToLinalgPass.cpp:0:0
+E               #16 0x0000aaaab41a4974 mlir::detail::OpToOpPassAdaptor::run(mlir::Pass*, mlir::Operation*, mlir::AnalysisManager, bool, unsigned int) (/home/devuser/workspace/ascend/triton-ascend/triton/python/triton/backends/huawei/triton-adapter-opt+0xbd4974)
+E               #17 0x0000aaaab41a4df0 mlir::detail::OpToOpPassAdaptor::runPipeline(mlir::OpPassManager&, mlir::Operation*, mlir::AnalysisManager, bool, unsigned int, mlir::PassInstrumentor*, mlir::PassInstrumentation::PipelineParentInfo const*) (/home/devuser/workspace/ascend/triton-ascend/triton/python/triton/backends/huawei/triton-adapter-opt+0xbd4df0)
+E               #18 0x0000aaaab41a5cb8 mlir::PassManager::run(mlir::Operation*) (/home/devuser/workspace/ascend/triton-ascend/triton/python/triton/backends/huawei/triton-adapter-opt+0xbd5cb8)
+E               #19 0x0000aaaab4199a38 performActions(llvm::raw_ostream&, std::shared_ptr<llvm::SourceMgr> const&, mlir::MLIRContext*, mlir::MlirOptMainConfig const&) MlirOptMain.cpp:0:0
+E               #20 0x0000aaaab419a0bc processBuffer(llvm::raw_ostream&, std::unique_ptr<llvm::MemoryBuffer, std::default_delete<llvm::MemoryBuffer> >, mlir::MlirOptMainConfig const&, mlir::DialectRegistry&, llvm::ThreadPoolInterface*) MlirOptMain.cpp:0:0
+E               #21 0x0000aaaab419a1f8 llvm::LogicalResult llvm::function_ref<llvm::LogicalResult (std::unique_ptr<llvm::MemoryBuffer, std::default_delete<llvm::MemoryBuffer> >, llvm::raw_ostream&)>::callback_fn<mlir::MlirOptMain(llvm::raw_ostream&, std::unique_ptr<llvm::MemoryBuffer, std::default_delete<llvm::MemoryBuffer> >, mlir::DialectRegistry&, mlir::MlirOptMainConfig const&)::'lambda'(std::unique_ptr<llvm::MemoryBuffer, std::default_delete<llvm::MemoryBuffer> >, llvm::raw_ostream&)>(long, std::unique_ptr<llvm::MemoryBuffer, std::default_delete<llvm::MemoryBuffer> >, llvm::raw_ostream&) MlirOptMain.cpp:0:0
+E               #22 0x0000aaaab4511328 mlir::splitAndProcessBuffer(std::unique_ptr<llvm::MemoryBuffer, std::default_delete<llvm::MemoryBuffer> >, llvm::function_ref<llvm::LogicalResult (std::unique_ptr<llvm::MemoryBuffer, std::default_delete<llvm::MemoryBuffer> >, llvm::raw_ostream&)>, llvm::raw_ostream&, llvm::StringRef, llvm::StringRef) (/home/devuser/workspace/ascend/triton-ascend/triton/python/triton/backends/huawei/triton-adapter-opt+0xf41328)
+E               #23 0x0000aaaab41940bc mlir::MlirOptMain(llvm::raw_ostream&, std::unique_ptr<llvm::MemoryBuffer, std::default_delete<llvm::MemoryBuffer> >, mlir::DialectRegistry&, mlir::MlirOptMainConfig const&) (/home/devuser/workspace/ascend/triton-ascend/triton/python/triton/backends/huawei/triton-adapter-opt+0xbc40bc)
+E               #24 0x0000aaaab419a308 mlir::MlirOptMain(int, char**, llvm::StringRef, llvm::StringRef, mlir::DialectRegistry&) (/home/devuser/workspace/ascend/triton-ascend/triton/python/triton/backends/huawei/triton-adapter-opt+0xbca308)
+E               #25 0x0000aaaab419a6fc mlir::MlirOptMain(int, char**, llvm::StringRef, mlir::DialectRegistry&) (/home/devuser/workspace/ascend/triton-ascend/triton/python/triton/backends/huawei/triton-adapter-opt+0xbca6fc)
+E               #26 0x0000aaaab36de548 main (/home/devuser/workspace/ascend/triton-ascend/triton/python/triton/backends/huawei/triton-adapter-opt+0x10e548)
+E               #27 0x0000ffffbe6573fc __libc_start_call_main ./csu/../sysdeps/nptl/libc_start_call_main.h:74:3
+E               #28 0x0000ffffbe6574cc call_init ./csu/../csu/libc-start.c:128:20
+E               #29 0x0000ffffbe6574cc __libc_start_main ./csu/../csu/libc-start.c:379:5
+E               #30 0x0000aaaab36fde70 _start (/home/devuser/workspace/ascend/triton-ascend/triton/python/triton/backends/huawei/triton-adapter-opt+0x12de70)
+E               ///------------------[ERROR][Triton][END]------------------
+
+../../ascend/triton-ascend/triton/python/triton/compiler/compiler.py:297: MLIRCompilationError
+```
+
+</details>
