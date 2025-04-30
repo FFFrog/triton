@@ -21,7 +21,8 @@ pytest -svx tests/kernels/attention/test_prefix_prefill.py -k "chunked_prefill_p
 <details>
 <summary>HuaweiCompilationError</summary>
 
-E               triton.compiler.errors.MLIRCompilationError: 
+```
+E               triton.compiler.errors.MLIRCompilationError:
 E               ///------------------[ERROR][Triton][BEG]------------------
 E               [ConvertTritonIRToLinalgIR] encounters error:
 E               /home/devuser/workspace/vllm-project/vllm/vllm/attention/ops/prefix_prefill.py:244:42: remark: [MaskState] Unsupported cmpi scenario
@@ -84,5 +85,6 @@ E               #42 0x0000aaaacce8de70 _start (/home/devuser/workspace/ascend/tr
 E               ///------------------[ERROR][Triton][END]------------------
 
 ../../ascend/triton-ascend/triton/python/triton/compiler/compiler.py:297: MLIRCompilationError
+```
 
 </details>
