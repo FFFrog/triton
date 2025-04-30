@@ -9,6 +9,12 @@ inductor_npu                      0.1
 triton-ascend                     36969dafdad51877233f6adb2c077212d5058f1d
 ```
 
+Prepare vLLM repo:
+
+```bash
+git clone https://github.com/shink/vllm.git -b jyh/triton
+```
+
 ### vllm/attention/ops/chunked_prefill_paged_decode.py
 
 - [x] `cdiv_fn`
