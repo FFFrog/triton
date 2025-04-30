@@ -5,6 +5,7 @@ import torch
 # import torch_npu
 import triton
 import triton.language as tl
+from triton.testing import do_bench, perf_report
 # from sgl_kernel import moe_align_block_size
 
 
@@ -223,7 +224,7 @@ def test_moe_align_block_size_compare_implementations(
 
 # 性能测试配置部分
 configs = [
-    tt4n.Benchmark(
+    perf_report.Benchmark(
         x_names=['block_size'],  # 横轴变量
         x_vals=[32, 64, 128, 256],  # block_size 值
         line_arg='num_experts',  # 不同线代表不同的 num_experts
@@ -237,7 +238,7 @@ configs = [
     for tk in [1, 2, 4, 8]
 ]
 
-@tt4n.perf_report(configs)
+@perf_report(configs)
 def bench_moe_align_block_size(block_size, num_tokens, topk, num_experts):
     topk_ids = torch.stack(
         [
@@ -270,21 +271,11 @@ def bench_moe_align_block_size(block_size, num_tokens, topk, num_experts):
             num_tokens_post_pad_triton,
         )
 
-    return tt4n.do_bench(kernel_call)
+    return do_bench(kernel_call)
 
 if __name__ == "__main__":
     # pytest.main([__file__])
-    import sys
-    import os
-
-    # 选择保存图像目录（可选）
-    output_dir = "./perf_results"
-    os.makedirs(output_dir, exist_ok=True)
-
-    # 设置图像保存路径
-    for config in configs:
-        config.save_path = output_dir
-
-    # 运行所有性能测试
-    tt4n.main.bench([bench_moe_align_block_size])
+    
+     # 运行所有性能测试并生成报告
+    bench_moe_align_block_size.run(save_path='./perf_results')
 
