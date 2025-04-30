@@ -175,3 +175,38 @@ E               ///------------------[ERROR][Triton][END]------------------
 ```
 
 </details>
+
+### vllm/attention/ops/triton_decode_attention.py
+
+- [x] `tanh`
+- [x] `_fwd_kernel_stage1`
+- [x] `_fwd_grouped_kernel_stage1`
+- [x] `_fwd_kernel_stage2`
+
+```python
+pytest -svx tests/kernels/attention/test_triton_decode_attention.py
+```
+
+<details>
+<summary>HuaweiCompilationError</summary>
+
+```
+E               triton.compiler.errors.MLIRCompilationError:
+E               ///------------------[ERROR][Triton][BEG]------------------
+E               [ConvertTritonIRToLinalgIR] encounters error:
+E               PLEASE submit a bug report to https://github.com/llvm/llvm-project/issues/ and include the crash backtrace.
+E               Stack dump:
+E               0.      Program arguments: /home/devuser/workspace/ascend/triton-ascend/triton/python/triton/backends/huawei/triton-adapter-opt /tmp/tmp7qif0584/kernel.ttir.mlir "--triton-to-linalg=global-kernel=false named-ops=True" -o /tmp/tmp7qif0584/kernel.ttadapter.mlir
+E               #0 0x0000aaaab15eef80 llvm::sys::PrintStackTrace(llvm::raw_ostream&, int) (/home/devuser/workspace/ascend/triton-ascend/triton/python/triton/backends/huawei/triton-adapter-opt+0xfaef80)
+E               #1 0x0000aaaab15eca30 llvm::sys::RunSignalHandlers() (/home/devuser/workspace/ascend/triton-ascend/triton/python/triton/backends/huawei/triton-adapter-opt+0xfaca30)
+E               #2 0x0000aaaab15ecb78 SignalHandler(int) Signals.cpp:0:0
+E               #3 0x0000ffffaea4d7c0 (linux-vdso.so.1+0x7c0)
+E               #4 0x0000ffffae537d54 ./string/../sysdeps/aarch64/multiarch/../memcpy.S:257:0
+E               #5 0x0000aaaab07af6f8 mlir::triton::BlockDataParser::parseExpandDims(mlir::triton::ExpandDimsOp, mlir::triton::BlockData&, mlir::Location const&, mlir::ConversionPatternRewriter&, llvm::SmallDenseMap<mlir::Value, mlir::triton::BlockData, 4u, llvm::DenseMapInfo<mlir::Value, void>, llvm::detail::DenseMapPair<mlir::Value, mlir::triton::BlockData> > const&) (/home/devuser/workspace/ascend/triton-ascend/triton/python/triton/backends/huawei/triton-adapter-opt+0x16f6f8)
+E               #6 0x0000fffffbece5f0
+E               ///------------------[ERROR][Triton][END]------------------
+
+../../ascend/triton-ascend/triton/python/triton/compiler/compiler.py:297: MLIRCompilationError
+```
+
+</details>
