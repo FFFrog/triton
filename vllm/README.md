@@ -25,7 +25,7 @@ pytest -svx tests/kernels/attention/test_prefix_prefill.py -k "chunked_prefill_p
 ```
 
 <details>
-<summary>HuaweiCompilationError</summary>
+<summary>MLIRCompilationError</summary>
 
 ```
 E               triton.compiler.errors.MLIRCompilationError:
@@ -106,7 +106,7 @@ pytest -svx tests/kernels/attention/test_prefix_prefill.py -k "context_attention
 ```
 
 <details>
-<summary>HuaweiCompilationError</summary>
+<summary>MLIRCompilationError</summary>
 
 ```
 E               triton.compiler.errors.MLIRCompilationError:
@@ -188,7 +188,7 @@ pytest -svx tests/kernels/attention/test_triton_decode_attention.py
 ```
 
 <details>
-<summary>HuaweiCompilationError</summary>
+<summary>MLIRCompilationError</summary>
 
 ```
 E               triton.compiler.errors.MLIRCompilationError:
@@ -248,7 +248,7 @@ python triton/state_passing_fwd/test.py
 ```
 
 <details>
-<summary>HuaweiCompilationError</summary>
+<summary>MLIRCompilationError</summary>
 
 ```
 Traceback (most recent call last):
