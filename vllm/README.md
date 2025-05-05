@@ -188,6 +188,8 @@ E               ///------------------[ERROR][Triton][END]------------------
 pytest -svx tests/kernels/attention/test_triton_decode_attention.py
 ```
 
+> 问题跟踪：https://gitee.com/ascend/triton-ascend/issues/IC5HR1?from=project-issue
+
 <details>
 <summary>MLIRCompilationError</summary>
 
@@ -223,6 +225,8 @@ E               ///------------------[ERROR][Triton][END]------------------
 ```python
 pytest -svx tests/kernels/attention/test_lightning_attn.py
 ```
+
+> 缺少 return 操作数，见：https://mlir.llvm.org/docs/Dialects/Func/#funcreturn-funcreturnop
 
 <details>
 <summary>MLIRCompilationError</summary>
@@ -370,6 +374,8 @@ E               ///------------------[ERROR][Triton][END]------------------
 ```python
 pytest -svx tests/kernels/quantization/test_triton_scaled_mm.py
 ```
+
+> 问题跟踪：https://gitee.com/ascend/triton-ascend/issues/IC5IDP?from=project-issue
 
 <details>
 <summary>MLIRCompilationError</summary>
