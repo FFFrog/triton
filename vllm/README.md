@@ -98,7 +98,7 @@ E               ///------------------[ERROR][Triton][END]------------------
 
 ### vllm/attention/ops/prefix_prefill.py
 
-- [x] `_fwd_kernel`
+- [x] `_fwd_kernel` —— 会调用 `tl.multiple_of`
 - [ ] `_fwd_kernel_flash_attn_v2`
 - [x] `_fwd_kernel_alibi`
 
@@ -785,3 +785,25 @@ FAILED tests/v1/sample/test_rejection_sampler.py::test_deterministic_when_seeded
 ================================================================================================ 1 failed, 16 deselected, 2 warnings in 8.11s ================================================================================================
 ```
 </details>
+
+### vllm/lora/ops/triton_ops/kernel_utils.py
+
+- [ ] `mm_k`
+- [ ] `do_expand_kernel` —— 会调用 `tl.max_contiguous`，`tl.multiple_of`
+- [ ] `do_shrink_kernel` —— 会调用 `tl.max_contiguous`，`tl.multiple_of`，一定条件下会调用 `tl.atomic_add`
+
+> 触发条件：CUDA
+
+### vllm/model_executor/layers/mamba/ops/ssd_chunk_scan.py
+
+- [ ] `_chunk_scan_fwd_kernel`
+
+> 触发条件：CUDA
+
+### vllm/model_executor/layers/mamba/ops/ssd_chunk_state.py
+
+- [ ] `_chunk_cumsum_fwd_kernel` —— 会调用 `tl.cumsum`
+- [ ] `_chunk_state_fwd_kernel`
+- [ ] `_chunk_state_varlen_kernel`
+
+> 触发条件：CUDA
