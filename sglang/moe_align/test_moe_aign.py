@@ -1,11 +1,10 @@
 import itertools
-import triton.testing as tt4n
+
 import pytest
 import torch
-# import torch_npu
+import torch_npu
 import triton
 import triton.language as tl
-from triton.testing import do_bench, perf_report
 # from sgl_kernel import moe_align_block_size
 
 
@@ -153,10 +152,9 @@ def moe_align_block_size_triton(
 def test_moe_align_block_size_compare_implementations(
     block_size, num_tokens, topk, num_experts
 ):
-
     topk_ids = torch.stack(
         [
-            torch.randperm(num_experts, dtype=torch.int32, device="cuda")[:topk]
+            torch.randperm(num_experts, dtype=torch.int32, device="npu")[:topk]
             for _ in range(num_tokens)
         ]
     )
@@ -207,7 +205,8 @@ def test_moe_align_block_size_compare_implementations(
         expert_ids_triton,
         num_tokens_post_pad_triton,
     )
-
+    print(f"expert_ids_triton:{expert_ids_triton}")
+    print(f"num_tokens_post_pad_triton:{expert_ids_triton}")
     # assert torch.allclose(expert_ids_cuda, expert_ids_triton), (
     #     f"Expert IDs mismatch for block_size={block_size}, "
     #     f"num_tokens={num_tokens}, topk={topk}\n"
@@ -222,60 +221,50 @@ def test_moe_align_block_size_compare_implementations(
     #     f"Triton num_tokens_post_pad: {num_tokens_post_pad_triton}"
     # )
 
-# 性能测试配置部分
-configs = [
-    perf_report.Benchmark(
-        x_names=['block_size'],  # 横轴变量
-        x_vals=[32, 64, 128, 256],  # block_size 值
-        line_arg='num_experts',  # 不同线代表不同的 num_experts
-        line_vals=[64, 160, 256, 257],
-        line_names=[f"experts={x}" for x in [64, 160, 256, 257]],
-        ylabel='Time (ms)',
-        plot_name=f"moe-align-block-size-bench-num_tokens-{nt}-topk-{tk}",
-        args={'num_tokens': nt, 'topk': tk}
-    )
-    for nt in [64, 128, 256, 512, 1024]  # 测试多个 token 数量
-    for tk in [1, 2, 4, 8]
-]
-
-@perf_report(configs)
-def bench_moe_align_block_size(block_size, num_tokens, topk, num_experts):
-    topk_ids = torch.stack(
-        [
-            torch.randperm(num_experts, dtype=torch.int32, device="cuda")[:topk]
-            for _ in range(num_tokens)
-        ]
-    )
-
-    max_num_tokens_padded = topk_ids.numel() + num_experts * (block_size - 1)
-
-    sorted_ids_triton = torch.empty(
-        (max_num_tokens_padded,), dtype=torch.int32, device=topk_ids.device
-    )
-    expert_ids_triton = torch.zeros(
-        (max_num_tokens_padded // block_size,),
-        dtype=torch.int32,
-        device=topk_ids.device,
-    )
-    num_tokens_post_pad_triton = torch.empty(
-        (1), dtype=torch.int32, device=topk_ids.device
-    )
-
-    def kernel_call():
-        moe_align_block_size_triton(
-            topk_ids,
-            num_experts,
-            block_size,
-            sorted_ids_triton,
-            expert_ids_triton,
-            num_tokens_post_pad_triton,
+class SimpleProfiler():
+    def __init__(self, path="./profile_result", **kwargs):
+        level_id = kwargs.get("level", 1)
+        assert(level_id in [0, 1, 2])
+        level = getattr(torch_npu.profiler.ProfilerLevel, f"Level{level_id}")
+        experimental_config = torch_npu.profiler._ExperimentalConfig(profiler_level=level)
+        self.wait = kwargs.get("wait", 0)
+        self.warmup = kwargs.get("warmup", 3)
+        self.active = kwargs.get("active", 30)
+        self.repeat = kwargs.get("repeat", 1)
+        self.skip_first = kwargs.get("skip_first", 0)
+        with_stack = kwargs.get("with_stack", False)
+        record_shapes = kwargs.get("record_shapes", False)
+        profile_memory = kwargs.get("profile_memory", False)
+        self.profiler = torch_npu.profiler.profile(
+            with_stack=with_stack,
+            record_shapes=record_shapes,
+            profile_memory=profile_memory,
+            schedule=torch_npu.profiler.schedule(
+                wait=self.wait, warmup=self.warmup, active=self.active, repeat=self.repeat),
+            experimental_config=experimental_config,
+            on_trace_ready=torch_npu.profiler.tensorboard_trace_handler(path)
         )
 
-    return do_bench(kernel_call)
+    def run_profiler(self, fn, *args, **kwargs):
+        with self.profiler as prof:
+            torch.npu.synchronize()
+            for _ in range(self.skip_first+(self.wait+self.warmup+self.active)*self.repeat):
+                fn(*args, **kwargs)
+                torch.npu.synchronize()
+                prof.step()
+            torch.npu.synchronize()
+
+# Profiling 封装函数
+def test_wrapper():
+    test_moe_align_block_size_compare_implementations(
+        block_size=32,
+        num_tokens=64,
+        topk=2,
+        num_experts=8
+    )
 
 if __name__ == "__main__":
-    # pytest.main([__file__])
-    
-     # 运行所有性能测试并生成报告
-    bench_moe_align_block_size.run(save_path='./perf_results')
+    pytest.main([__file__])
+    profiler = SimpleProfiler(level=1, wait=1, warmup=2, active=1, repeat=1)
+    profiler.run_profiler(test_wrapper)
 
