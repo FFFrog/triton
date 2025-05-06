@@ -57,6 +57,19 @@ def per_token_quant_int8(x):
     return x_q, scales
 
 
+def main():
+    dtypes = [torch.bfloat16, torch.float16, torch.float32]
+    for dtype in dtypes:
+        x = torch.randn([3, 3], dtype=dtype, device=device)
+
+        print(f"dtype: {dtype}", end="...")
+        try:
+            _, _ = per_token_quant_int8(x)
+        except Exception as e:
+            print(f"Error: \n{e}\n")
+        else:
+            print("Success")
+
+
 if __name__ == "__main__":
-    x = torch.randn([3, 3], dtype=torch.float32, device=device)
-    per_token_quant_int8(x)
+    main()
