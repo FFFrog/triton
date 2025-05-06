@@ -2,7 +2,6 @@ import itertools
 
 import pytest
 import torch
-import torch_npu
 import triton
 import triton.language as tl
 from triton.testing import do_bench
@@ -207,7 +206,8 @@ def test_moe_align_block_size_compare_implementations(
         expert_ids_triton,
         num_tokens_post_pad_triton,
     )
-
+    print(f"expert_ids_triton:{expert_ids_triton}")
+    print(f"num_tokens_post_pad_triton:{num_tokens_post_pad_triton}")
     # assert torch.allclose(expert_ids_cuda, expert_ids_triton), (
     #     f"Expert IDs mismatch for block_size={block_size}, "
     #     f"num_tokens={num_tokens}, topk={topk}\n"
