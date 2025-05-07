@@ -51,3 +51,41 @@ Error run BiShengIR pipeline pipeline
 
 [ERROR] 2025-04-24-03:17:50 (PID:3496068, Device:0, RankID:-1) ERR99999 UNKNOWN application exception
 ```
+
+```
+dtype: torch.bfloat16...Error: 
+
+///------------------[ERROR][Triton][BEG]------------------
+[ConvertLinalgRToBinary] encounters error:
+loc("/tmp/tmpwxjug5e8/kernel.ttadapter.mlir":1:1): error: run BiShengHIR pipeline failed
+
+loc("/tmp/tmpwxjug5e8/kernel.ttadapter.mlir":1:1): error: run BiShengHIR pipeline failed
+
+loc("/tmp/tmpwxjug5e8/kernel.ttadapter.mlir":1:1): error: run BiShengHIR pipeline failed
+
+loc("/tmp/tmpwxjug5e8/kernel.ttadapter.mlir":1:1): error: run BiShengHIR pipeline failed
+
+loc("/tmp/tmpwxjug5e8/kernel.ttadapter.mlir":1:1): error: run BiShengHIR pipeline failed
+
+Error run BiShengIR pipeline pipeline 
+///------------------[ERROR][Triton][END]------------------
+
+
+dtype: torch.float16...Success
+dtype: torch.float32...Error: 
+
+///------------------[ERROR][Triton][BEG]------------------
+[ConvertLinalgRToBinary] encounters error:
+loc("/tmp/tmp1dx5q6x7/kernel.ttadapter.mlir":1:1): error: run BiShengHIR pipeline failed
+
+loc("/tmp/tmp1dx5q6x7/kernel.ttadapter.mlir":1:1): error: run BiShengHIR pipeline failed
+
+loc("/tmp/tmp1dx5q6x7/kernel.ttadapter.mlir":1:1): error: run BiShengHIR pipeline failed
+
+loc("/tmp/tmp1dx5q6x7/kernel.ttadapter.mlir":1:1): error: run BiShengHIR pipeline failed
+
+loc("/tmp/tmp1dx5q6x7/kernel.ttadapter.mlir":1:1): error: run BiShengHIR pipeline failed
+
+Error run BiShengIR pipeline pipeline 
+///------------------[ERROR][Triton][END]------------------
+```

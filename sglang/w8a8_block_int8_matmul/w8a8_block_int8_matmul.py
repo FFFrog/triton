@@ -4,6 +4,7 @@ import triton
 
 import triton.language as tl
 
+
 @triton.jit
 def _w8a8_block_int8_matmul(
     # Pointers to inputs and output
@@ -172,10 +173,23 @@ def w8a8_block_int8_matmul(
     return C
 
 
+def main():
+    dtypes = [torch.bfloat16, torch.float16, torch.float32]
+    for dtype in dtypes:
+        A = torch.randn([10, 160], dtype=dtype, device="npu")
+        B = torch.randn([160, 160], dtype=dtype, device="npu")
+        As = torch.randn([10, 10], dtype=torch.float16, device="npu")
+        Bs = torch.randn([10, 10], dtype=torch.float16, device="npu")
+        block_size = [16, 16]
+
+        print(f"dtype: {dtype}", end="...")
+        try:
+            _ = w8a8_block_int8_matmul(A, B, As, Bs, block_size)
+        except Exception as e:
+            print(f"Error: \n{e}\n")
+        else:
+            print("Success")
+
+
 if __name__ == "__main__":
-    A = torch.randn([10, 160], dtype=torch.float32, device="npu")
-    B = torch.randn([160, 160], dtype=torch.float32, device="npu")
-    As = torch.randn([10, 10], dtype=torch.float16, device="npu")
-    Bs = torch.randn([10, 10], dtype=torch.float16, device="npu")
-    block_size = [16, 16]
-    w8a8_block_int8_matmul(A, B, As, Bs, block_size)
+    main()

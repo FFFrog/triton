@@ -42,3 +42,31 @@ Error opening /tmp/tmpv3svrise/kernel.ttadapter.mlir
 
 [ERROR] 2025-04-24-03:46:30 (PID:3499025, Device:0, RankID:-1) ERR99999 UNKNOWN application exception
 ```
+
+```
+dtype: torch.bfloat16...Error: 
+
+///------------------[ERROR][Triton][BEG]------------------
+[ConvertLinalgRToBinary] encounters error:
+loc("/tmp/tmpxuynfzq1/kernel.ttadapter.mlir":48:11): error: Dialect `tt' not found for custom op 'tt.extern_elementwise' 
+Error opening /tmp/tmpxuynfzq1/kernel.ttadapter.mlir
+///------------------[ERROR][Triton][END]------------------
+
+
+dtype: torch.float16...Error: 
+
+///------------------[ERROR][Triton][BEG]------------------
+[ConvertLinalgRToBinary] encounters error:
+loc("/tmp/tmp56ml6n25/kernel.ttadapter.mlir":48:11): error: Dialect `tt' not found for custom op 'tt.extern_elementwise' 
+Error opening /tmp/tmp56ml6n25/kernel.ttadapter.mlir
+///------------------[ERROR][Triton][END]------------------
+
+
+dtype: torch.float32...Error: 
+
+///------------------[ERROR][Triton][BEG]------------------
+[ConvertLinalgRToBinary] encounters error:
+loc("/tmp/tmpjt_a7z_2/kernel.ttadapter.mlir":47:11): error: Dialect `tt' not found for custom op 'tt.extern_elementwise' 
+Error opening /tmp/tmpjt_a7z_2/kernel.ttadapter.mlir
+///------------------[ERROR][Triton][END]------------------
+```

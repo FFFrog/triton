@@ -70,12 +70,12 @@ def _decode_kernel(
     tl.store(Out + o_offset + e_idx, o.to(Out.dtype.element_ty), mask=e_mask)
 
 
-def decode_kernel():
-    q_padded = torch.randn([64, 64, 1, 128], dtype=torch.bfloat16, device=device)
-    k_padded = torch.randn([64, 64, 1, 128], dtype=torch.bfloat16, device=device)
-    v_padded = torch.randn([64, 64, 1, 128], dtype=torch.bfloat16, device=device)
+def decode_kernel(dtype):
+    q_padded = torch.randn([64, 64, 1, 128], dtype=dtype, device=device)
+    k_padded = torch.randn([64, 64, 1, 128], dtype=dtype, device=device)
+    v_padded = torch.randn([64, 64, 1, 128], dtype=dtype, device=device)
     kv_padded = torch.randn([64, 64, 128, 128], dtype=torch.float32, device=device)
-    o_padded = torch.randn([64, 64, 1, 128], dtype=torch.bfloat16, device=device)
+    o_padded = torch.randn([64, 64, 1, 128], dtype=dtype, device=device)
     s = torch.randn([64, 1, 1], dtype=torch.float32, device=device)
     b = 64
     h = 64
@@ -110,5 +110,17 @@ def decode_kernel():
     return o, kv_out
 
 
+def main():
+    dtypes = [torch.bfloat16, torch.float16, torch.float32]
+    for dtype in dtypes:
+        print(f"dtype: {dtype}", end="...")
+        try:
+            _, _ = decode_kernel(dtype)
+        except Exception as e:
+            print(f"Error: \n{e}\n")
+        else:
+            print("Success")
+
+
 if __name__ == "__main__":
-    decode_kernel()
+    main()
