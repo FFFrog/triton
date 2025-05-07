@@ -98,7 +98,8 @@ if __name__ == "__main__":
     end_expert_id = 31
 
     # 创建输入张量
-    gateup_output = torch.randn(token_num, hidden_size, device="cuda", dtype=torch.float16)
+    #gateup_output = torch.randn(token_num, hidden_size, device="cuda", dtype=torch.float16)
+    gateup_output = torch.ones((token_num, hidden_size), device="cuda", dtype=torch.float16)
     down_input = torch.empty(token_num, hidden_size // 2, device="cuda", dtype=torch.float16)
 
     # 模拟每个 token 对应的 expert id（范围在 start_expert_id 到 end_expert_id 之间）
@@ -118,7 +119,7 @@ if __name__ == "__main__":
         gateup_output=gateup_output,
         down_input=down_input,
         reorder_topk_ids=reorder_topk_ids,
-        scales=scales,
+        scales=None,
         start_expert_id=start_expert_id,
         end_expert_id=end_expert_id,
     )
