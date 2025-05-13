@@ -2,19 +2,35 @@
 
 ## Env
 
-Common Infos:
-
 ```
-torch                             2.3.1
-torch-npu                         2.3.1.post2
+torch                             2.6.0
+torch-npu                         2.6.0
 triton-ascend                     36969dafdad51877233f6adb2c077212d5058f1d
 ```
 
-Prepare vLLM repo:
+Clone vLLM 仓库:
+
+> 此仓库为 vllm 的 fork 仓库，只修改了 triton 测试相关的 Hard-Coded 部分
 
 ```bash
-git clone https://github.com/shink/vllm.git -b jyh/triton
+git clone https://github.com/shink/vllm.git -b jyh/triton --depth 1
 ```
+
+安装 vLLM 依赖：
+
+> 这些依赖项只是为了避免 import 错误，实际几乎执行不到这些依赖
+
+```bash
+cd vllm
+pip install -r requirements/common.txt
+pip install -r requirements/test.txt
+```
+
+> [!NOTE]
+>
+> 1. 所依赖的 torch 版本等以实际测试要求为准
+> 2. 安装依赖后确保 torch 版本没有被重新安装：`pip list | grep torch`
+> 3. 在 vllm 目录下执行 pytest 语句即可运行相关用例
 
 ### vllm/attention/ops/chunked_prefill_paged_decode.py
 
@@ -192,19 +208,24 @@ pytest -svx tests/kernels/attention/test_triton_decode_attention.py
 <summary>MLIRCompilationError</summary>
 
 ```
+E               subprocess.CalledProcessError: Command '['/home/devuser/program/bisheng/compiler/npuc', '/tmp/tmp0udiqjby/kernel.ttadapter.mlir', '--enable-auto-multi-buffer=True', '-o', '/tmp/tmp0udiqjby/kernel']' returned non-zero exit status 1.
+
+../../../.conda/envs/triton/lib/python3.10/subprocess.py:526: CalledProcessError
+
 E               triton.compiler.errors.MLIRCompilationError:
 E               ///------------------[ERROR][Triton][BEG]------------------
-E               [ConvertTritonIRToLinalgIR] encounters error:
-E               PLEASE submit a bug report to https://github.com/llvm/llvm-project/issues/ and include the crash backtrace.
-E               Stack dump:
-E               0.      Program arguments: /home/devuser/workspace/ascend/triton-ascend/triton/python/triton/backends/huawei/triton-adapter-opt /tmp/tmp7qif0584/kernel.ttir.mlir "--triton-to-linalg=global-kernel=false named-ops=True" -o /tmp/tmp7qif0584/kernel.ttadapter.mlir
-E               #0 0x0000aaaab15eef80 llvm::sys::PrintStackTrace(llvm::raw_ostream&, int) (/home/devuser/workspace/ascend/triton-ascend/triton/python/triton/backends/huawei/triton-adapter-opt+0xfaef80)
-E               #1 0x0000aaaab15eca30 llvm::sys::RunSignalHandlers() (/home/devuser/workspace/ascend/triton-ascend/triton/python/triton/backends/huawei/triton-adapter-opt+0xfaca30)
-E               #2 0x0000aaaab15ecb78 SignalHandler(int) Signals.cpp:0:0
-E               #3 0x0000ffffaea4d7c0 (linux-vdso.so.1+0x7c0)
-E               #4 0x0000ffffae537d54 ./string/../sysdeps/aarch64/multiarch/../memcpy.S:257:0
-E               #5 0x0000aaaab07af6f8 mlir::triton::BlockDataParser::parseExpandDims(mlir::triton::ExpandDimsOp, mlir::triton::BlockData&, mlir::Location const&, mlir::ConversionPatternRewriter&, llvm::SmallDenseMap<mlir::Value, mlir::triton::BlockData, 4u, llvm::DenseMapInfo<mlir::Value, void>, llvm::detail::DenseMapPair<mlir::Value, mlir::triton::BlockData> > const&) (/home/devuser/workspace/ascend/triton-ascend/triton/python/triton/backends/huawei/triton-adapter-opt+0x16f6f8)
-E               #6 0x0000fffffbece5f0
+E               [ConvertLinalgRToBinary] encounters error:
+E               loc("/tmp/tmp0udiqjby/kernel.ttadapter.mlir":2:1): error: run BiShengHIR pipeline failed
+E
+E               loc("/tmp/tmp0udiqjby/kernel.ttadapter.mlir":2:1): error: run BiShengHIR pipeline failed
+E
+E               loc("/tmp/tmp0udiqjby/kernel.ttadapter.mlir":2:1): error: run BiShengHIR pipeline failed
+E
+E               loc("/tmp/tmp0udiqjby/kernel.ttadapter.mlir":2:1): error: run BiShengHIR pipeline failed
+E
+E               loc("/tmp/tmp0udiqjby/kernel.ttadapter.mlir":2:1): error: run BiShengHIR pipeline failed
+E
+E               Error run BiShengIR pipeline pipeline
 E               ///------------------[ERROR][Triton][END]------------------
 
 ../../ascend/triton-ascend/triton/python/triton/compiler/compiler.py:297: MLIRCompilationError
@@ -778,4 +799,5 @@ FAILED tests/v1/sample/test_rejection_sampler.py::test_deterministic_when_seeded
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ================================================================================================ 1 failed, 16 deselected, 2 warnings in 8.11s ================================================================================================
 ```
+
 </details>
